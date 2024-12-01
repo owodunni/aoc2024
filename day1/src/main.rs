@@ -1,34 +1,40 @@
-use regex::Regex;
 use std::{env, fs};
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
-
-    let file_path = &args[1];
+    let file_path = env::args()
+        .nth(1)
+        .expect("Please provide a file as command line argument.");
 
     println!("Input file: {file_path}");
-
     let contents = fs::read_to_string(file_path).expect("Should have been able to read the file");
 
-    let result = sum_engine_parts(contents);
-
-    println!("Engine sum: {}", result)
+    let result = calculate_location_list_distance(contents);
+    println!("Distance: {result}");
 }
 
-fn sum_engine_parts(schematics: String) -> i64 {
-    dbg!(schematics);
-    let re = Regex::new(r"(\d{4})-(\d{2})-(\d{2})").unwrap();
-    let hay = "On 2010-03-14, foo happened. On 2014-10-14, bar happened.";
+fn calculate_location_list_distance(contents: String) -> i64 {
+    let lines = contents.lines();
 
-    let mut dates = vec![];
-    for (_, [year, month, day]) in re.captures_iter(hay).map(|c| c.extract()) {
-        dates.push((year, month, day));
+    let (mut left, mut right): (Vec<i64>, Vec<i64>) = lines
+        .map(|line| {
+            line.split_whitespace()
+                .map(|item| item.parse().unwrap())
+                .collect::<Vec<i64>>()
+        })
+        .map(|locations| (locations[0], locations[1]))
+        .unzip();
+
+    left.sort();
+    right.sort();
+
+    let mut distance: i64 = 0;
+
+    for it in left.iter().zip(right.iter()) {
+        let (l, r) = it;
+        distance = (l - r).abs() + distance
     }
-    assert_eq!(dates, vec![
-      ("2010", "03", "14"),
-      ("2014", "10", "14"),
-    ]);;
-    0
+
+    distance
 }
 
 #[cfg(test)]
@@ -37,18 +43,14 @@ mod tests {
 
     #[test]
     fn it_works() {
-        const ENGINE_PARTS: &'static str = "467..114..
-...*......
-..35..633.
-......#...
-617*......
-.....+.58.
-..592.....
-......755.
-...$.*....
-.664.598..";
+        const LOCATION_LIST: &'static str = "3   4
+4   3
+2   5
+1   3
+3   9
+3   3";
 
-        let result = sum_engine_parts(String::from(ENGINE_PARTS));
-        assert_eq!(result, 0);
+        let result = calculate_location_list_distance(String::from(LOCATION_LIST));
+        assert_eq!(result, 11);
     }
 }
