@@ -11,4 +11,6 @@ edition = "2024"
 
 members = [
     "day1"
-, "day2"]
+, "day2"
+, "day3"
+, "day4"]
